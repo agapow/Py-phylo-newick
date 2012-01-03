@@ -1,0 +1,12 @@
+README.txt
+setup.py
+Py_phylo_newick.egg-info/PKG-INFO
+Py_phylo_newick.egg-info/SOURCES.txt
+Py_phylo_newick.egg-info/dependency_links.txt
+Py_phylo_newick.egg-info/entry_points.txt
+Py_phylo_newick.egg-info/namespace_packages.txt
+Py_phylo_newick.egg-info/not-zip-safe
+Py_phylo_newick.egg-info/requires.txt
+Py_phylo_newick.egg-info/top_level.txt
+phylo/__init__.py
+phylo/newick/__init__.py
