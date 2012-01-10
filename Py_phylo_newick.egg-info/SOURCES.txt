@@ -1,4 +1,5 @@
 README.txt
+setup.cfg
 setup.py
 Py_phylo_newick.egg-info/PKG-INFO
 Py_phylo_newick.egg-info/SOURCES.txt
@@ -10,3 +11,6 @@ Py_phylo_newick.egg-info/requires.txt
 Py_phylo_newick.egg-info/top_level.txt
 phylo/__init__.py
 phylo/newick/__init__.py
+phylo/newick/dialect.py
+phylo/newick/reader.py
+phylo/newick/writer.py

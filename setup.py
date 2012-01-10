@@ -22,6 +22,7 @@ setup(name='Py-phylo-newick',
       namespace_packages=['phylo'],
       include_package_data=True,
       zip_safe=False,
+		test_suite='nose.collector',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
@@ -29,4 +30,5 @@ setup(name='Py-phylo-newick',
       entry_points="""
       # -*- Entry points: -*-
       """,
-      )
+)
+
