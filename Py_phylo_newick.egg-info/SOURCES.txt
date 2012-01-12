@@ -14,3 +14,6 @@ phylo/newick/__init__.py
 phylo/newick/dialect.py
 phylo/newick/reader.py
 phylo/newick/writer.py
+tests/__init__.py
+tests/test_reader.py
+tests/test_writer.py

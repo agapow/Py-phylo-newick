@@ -20,10 +20,14 @@ from phylo.core.tree import Tree
 ### CONSTANTS & DEFINES ###
 
 _quotedNameRegex = re.compile (r"\s*'([^']*)'\s*")
-_nameRegex = re.compile (r"\s*([a-zA-Z0-9\-_\?\*\/\[\]]+)\s*")
+_nameRegex = re.compile (r"\s*([a-zA-Z0-9\-_\?\*\/]+)\s*")
 _cleanSpaceRegex = re.compile (r"\s+")
-_distRegex = re.compile (r"\s*:\s*(\-?\d\.\d+e\-\d+|\-?0?\.\d+|\d+\.\d+|\d+)\s*")
+_distRegex = re.compile (r"\s*:\s*(\-?\d\.\d+[eE]\-\d+|\-?0?\.\d+|\d+\.\d+|\d+)\s*",
+	re.IGNORECASE)
 _SUPPORTVAL_RE = re.compile (r"\s*(\-?0?\.\d+|\d+\.\d+|\d+)\s*")
+_NODE_ANN_REGEX = re.compile (r"^\s*\[\&([^\]]*)\]\s*")
+_ANN_LIST_SPLIT_RE = re.compile (r',([a-zA-Z]+)')
+
 
 
 ### IMPLEMENTATION ###
@@ -86,8 +90,8 @@ class NewickReader (io.BaseReader):
 	# TODO: It would be nice to get rid of all internal space, but what if
 	# there are quoted names?
 
-	def __init__ (self, tree_kls=Tree):
-		io.BaseReader.__init__ (self)
+	def __init__ (self, dialect={}, tree_kls=Tree):
+		io.BaseReader.__init__ (self, dialect=dialect)
 		self._tree_kls = tree_kls
 
 	def _read (self, src):
@@ -125,7 +129,7 @@ class NewickReader (io.BaseReader):
 		## Main:
 		self._curr_src = cStringIO.StringIO (tree_str)
 		self._curr_tree = self._tree_kls()
-		self._parseNode (None)
+		self._parse_node (None)
 
 		## Postconditions & return:
 		return self._curr_tree
@@ -175,7 +179,7 @@ class NewickReader (io.BaseReader):
 		else:
 			return None
 
-	def _parseNode (self, par_node):
+	def _parse_node (self, par_node):
 		"""
 		Parse the current node in the passed string into the growing tree.
 
@@ -188,7 +192,7 @@ class NewickReader (io.BaseReader):
 			new_node = self._curr_tree.add_root()
 		else:
 			new_node, new_branch= self._curr_tree.add_node (par_node)
-
+		
 		# move to start of tree string
 		self._consumeLeadingSpace()
 		if (self._peek() == '('):
@@ -196,36 +200,56 @@ class NewickReader (io.BaseReader):
 			# consume leading brace
 			self._curr_src.read(1)
 			# parse the first child node
-			self._parseNode (new_node)
+			self._parse_node (new_node)
 			# now we look for one or more following nodes
 			self._consumeLeadingSpace()
+			#print self._curr_tree._nodes
 			while (self._peek() == ','):
 				self._curr_src.read(1)
-				self._parseNode (new_node)
+				self._parse_node (new_node)
 				self._consumeLeadingSpace()
 			# consume end bracket
 			self._consumeLeadingSpace()
-			assert (self._peek() == ')'), "can't find end brace in [%s] at [%s]" % \
-				(self._curr_src.getvalue (), self._curr_src.getvalue ()[self._curr_src.tell():])
+			posn = self._curr_src.tell()
+			assert (self._peek() == ')'), \
+				"can't find end brace in '%s...' at position %s '%s'" % (
+					self._curr_src.getvalue ()[:10],
+					posn,
+					self._curr_src.getvalue ()[posn:posn+10],
+				)
 			self._curr_src.read (1)
 		# read support val if it's there
-		support_val = self._parse_support_value()
-		if (support_val is not None):
-			new_node['support'] = support_val
+		# TODO: this eats the name if it's numeric
+		#support_val = self._parse_support_value()
+		#if (support_val is not None):
+		#	new_node['support'] = support_val
 		# read node name
 		node_name = self._parseName()
 		if (node_name is not None):
-			new_node['title'] = node_name
+			new_node.title = node_name
+		#print self._curr_src.getvalue()[:30]
+		if self.dialect.get ('node_annotations', True):
+			x = self._parse_node_annotations (new_node)
 		# read distance (if it's there)
 		dist_to_node = self._parseDist()
-		if (dist_to_node is not None):
+		if (dist_to_node is not None): 
 			if par_node:
 				new_branch['distance'] = dist_to_node
 			else:
 				new_node['distance'] = dist_to_node
 		return new_node
-
-
+	
+	def _parse_node_annotations (self, curr_node):
+		theNextStr = self._curr_src.getvalue()[self._curr_src.tell():]
+		theMatch = _NODE_ANN_REGEX.match (theNextStr)
+		if (theMatch):
+			self._curr_src.read (len (theMatch.group (0)))
+			# TODO: must be a better way to split this string (has internal commas)
+			anns = _ANN_LIST_SPLIT_RE.sub (r'||\1', theMatch.group(1)).split ('||')
+			prs = dict ([x.split ('=', 1) for x in anns])
+			curr_node.update (prs)
+		else:
+			return None		
 
 ### TEST & DEBUG ###
 
