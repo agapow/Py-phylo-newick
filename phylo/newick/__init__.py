@@ -9,7 +9,7 @@ Requires phylo.core.
 
 __docformat__ = 'restructuredtext en'
 __author__ = "P-M Agapow <pma@agapow.net>"
-__version__ = "0.1"
+__version__ = "0.1.1"
 
 
 ### IMPORTS ###

@@ -18,7 +18,7 @@ import re
 from phylo.core import io
 
 __all__ = [
-	'Writer',
+	'NewickWriter',
 ]
 
 
@@ -31,7 +31,7 @@ _spacesInNameRegex = re.compile (r"[\s\,]+")
 
 ### IMPLEMENTATION ####
 
-class Writer (io.BaseWriter):
+class NewickWriter (io.BaseWriter):
 	"""
 	A writer for Newick formatted phylogenies.
 
@@ -41,7 +41,9 @@ class Writer (io.BaseWriter):
 	# TODO: a precision option for distances
 
 	def __init__ (self, dialect=None):
-		dialect = dialect or WriterDialect()
+		dialect = dialect
+		self._dist_format = '%.3f'
+		self._support_format = '%.2f'
 		io.BaseWriter.__init__ (self, dialect)
 
 	def _write (self, in_tree, dest):
@@ -52,8 +54,6 @@ class Writer (io.BaseWriter):
 		## Preparation:
 		self._src_tree = in_tree
 		self._dest_strm = dest
-		self._dist_format = '%.3f'
-		self._support_format = '%.2f'
 		## Main:
 		root = in_tree.root
 		if (not root):
@@ -79,8 +79,7 @@ class Writer (io.BaseWriter):
 		else:
 			# complex (internal) node
 			self._dest_strm.write ('(')
-			children = [n for n in self._src_tree.iter_adjacent_nodes(node) if
-				(n is not parent)]
+			children = self._src_tree.node_children(node)
 			first_node = True
 			for child in children:
 				if (first_node):
@@ -95,7 +94,9 @@ class Writer (io.BaseWriter):
 				self._dest_strm.write (self._support_format % supval)
 		# do the distance
 		if parent:
-			dist = self._src_tree.get_distance (node, parent)
+			br = self._src_tree.get_branch (node, parent)
+			#dist = self._src_tree.get_distance (node, parent)
+			dist = br.distance
 		else:
 			dist = node.get ('distance', None)
 		if (dist is not None):

@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 import os
 
-version = '0.1'
+from phylo.newick import __version__
 
 setup(name='Py-phylo-newick',
-      version=version,
+      version=__version__,
       description="Routines for parsing and writing phylogenies in Newick format",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
